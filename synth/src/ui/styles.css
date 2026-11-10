@@ -2873,3 +2873,21 @@ input[type="range"]::-moz-range-thumb {
 .studio-motion-controls small { color:#ffb340; font-size:9px; }
 .studio-motion-controls { max-width: calc(100% - 24px); row-gap: 6px; }
 .studio-motion-controls label { white-space: nowrap; }
+/* Song editor: a separate editing surface; the existing roll remains the live voice monitor. */
+.song-modal { position:fixed; inset:0; z-index:1000; background:#000d; display:flex; align-items:center; justify-content:center; padding:20px; color:#d8f5ff; font-family:Arial,sans-serif; }
+.song-editor { width:min(1200px,100%); height:min(800px,95vh); background:#000; border:1px solid #3487c4; box-shadow:0 0 30px #205d8c55; display:flex; flex-direction:column; min-height:0; }
+.song-editor header { display:flex; align-items:center; justify-content:space-between; padding:14px; border-bottom:1px solid #174461; letter-spacing:2px; color:#4fb6f2; }
+.song-editor header span { font-size:10px; color:#688b9e; margin-left:10px; }
+.song-editor button,.song-editor select,.song-editor input { background:#06151e; color:#bce9fa; border:1px solid #2a6787; border-radius:0; padding:6px 8px; font:12px Arial,sans-serif; }
+.song-editor button { cursor:pointer; }.song-editor button:hover,.song-editor button:focus-visible { border-color:#5be381;color:#5be381; }
+.song-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:7px; padding:10px 12px; }
+.song-toolbar label,.song-inspector label { display:flex; align-items:center; gap:6px; color:#8dbacb; font-size:11px; }
+.song-toolbar input { width:65px; }.song-status { color:#98bdca; font-size:11px; margin:0; padding:0 12px 9px; min-height:22px; }
+.song-grid-scroll { flex:1; min-height:180px; overflow:auto; border-block:1px solid #174461; background:#020a0e; }
+.song-grid { position:relative; cursor:crosshair; user-select:none; }
+.song-row { position:absolute; left:0; right:0; border-bottom:1px solid #102d3e; pointer-events:none; }.song-row.black { background:#071923; }.song-row span { position:absolute; left:5px; color:#86b7ce; font-size:10px; }
+.song-beat { position:absolute; top:0; bottom:0; border-left:1px solid #15374a; pointer-events:none; }.song-beat.bar {border-color:#39718a}.song-beat span {color:#7ca7b8;font-size:9px;position:absolute;top:2px;left:3px}
+.song-note { position:absolute; overflow:hidden; white-space:nowrap; background:#154b38; border:1px solid #5be381; color:#d7ffde; padding:1px 3px; font-size:10px; cursor:grab; touch-action:none; }.song-note.selected { background:#2a7351; border-color:#fff; }.song-note:active {cursor:grabbing}
+.song-inspector {display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px; font-size:11px; color:#7db1c5; }.song-inspector b {color:#5be381; letter-spacing:1px}.song-inspector input {width:64px}.song-inspector .word-input {width:110px}.song-inspector small {color:#7093a0}
+.studio-motion-controls { max-height:40%; overflow:auto; }
+@media(max-width:600px) { .song-modal {padding:4px}.song-editor {height:98vh}.song-inspector {gap:6px}.song-editor header span {display:none} }

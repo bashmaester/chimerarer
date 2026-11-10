@@ -1,5 +1,7 @@
 import { createServer } from 'vite';
 import * as THREE from 'three';
+import midiPackage from '@tonejs/midi';
+const { Midi } = midiPackage;
 const server=await createServer({server:{middlewareMode:true}});
 const {sameBody}=await server.ssrLoadModule('/synth/src/ui/body.ts');
 const {studioBody}=await server.ssrLoadModule('/synth/src/ui/render/studioBody.js');
@@ -12,4 +14,9 @@ for(const hair of ['None','Long','Bob','Curls']) for(const clothing of ['None','
 body.update(time+=.016,motion,.65,anchor,1,hair,clothing);
 for(const mesh of body.group.children){if(mesh.visible){const pos=mesh.geometry.getAttribute('instanceStart');for(let i=0;i<mesh.geometry.instanceCount;i++)if(!Number.isFinite(pos.getX(i)) || !Number.isFinite(pos.getY(i)) || !Number.isFinite(pos.getZ(i)))throw Error(`invalid geometry: ${motion} ${hair} ${clothing}`)}}
 }
-console.log('Telemetry matching and procedural geometry checks passed');body.dispose();await server.close();
+const {importMidiTrack}=await server.ssrLoadModule('/synth/src/ui/midiImport.ts');
+const midi=new Midi(), track=midi.addTrack();
+track.addNote({midi:60,ticks:0,durationTicks:480}); track.addNote({midi:64,ticks:240,durationTicks:480}); track.addNote({midi:67,ticks:240,durationTicks:480});
+const decoded=new Midi(midi.toArray());let counter=0;const imported=importMidiTrack(decoded,0,()=>String(++counter));
+if(imported.notes.length!==2 || imported.adjusted!==2 || imported.notes[0].beats!==.5 || imported.notes[1].midi!==67)throw Error('MIDI overlap conversion failed');
+console.log('Telemetry, body geometry and MIDI conversion checks passed');body.dispose();await server.close();

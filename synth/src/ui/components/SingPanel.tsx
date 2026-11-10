@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { SongEditor } from "./SongEditor.tsx";
 import { useStore } from "../store.ts";
 import { useSing, playDemo, stopSinging, soundingSyllable, sungNow, DEMO_SONGS, ensureDictionary } from "../singing.ts";
 import { mouthWords } from "../mouthWords.ts";
@@ -142,11 +143,12 @@ export function SingRight() {
   // the pronouncing dictionary for the lyrics: here rather than on the mode switch, since the app
   // opens on Sing without one
   useEffect(ensureDictionary, []);
+  const [editing, setEditing] = useState(false);
   const ring = useStore((s) => s.artic.epilarynx >= RING - 0.05);
   const next = useSing((s) => (s.demo ? null : (s.syllables[s.cursor]?.text ?? null)));
   return (
     <div className="right right-sing">
-      <Screen className="s-roll" title="Piano roll" sub="Notes and the pitch sung">
+      <Screen className="s-roll" title="Piano roll" sub="Notes and the pitch sung" tools={<Chip toggle={false} onClick={() => setEditing(true)}>Edit song / MIDI</Chip>}>
         <PianoRoll />
       </Screen>
       <Screen className="s-lyrics" title="Lyrics" sub="Each note sings the next syllable" tools={<DemoSongs />}>
@@ -158,6 +160,7 @@ export function SingRight() {
       <Screen className="s-voice" title="Voice">
         <SongControls />
       </Screen>
+      {editing && <SongEditor close={() => setEditing(false)} />}
       <Screen className="s-keys" title="Keys" sub={next ? `Next: ${next}` : ""}>
         <Keys />
       </Screen>

@@ -30,6 +30,10 @@ jobs:
           path: synth/src/wasm/chimera.wasm
       - run: npm ci
       - run: npm test
+      - name: Browser smoke test
+        run: |
+          npm run dev -- --port 5173 --strictPort > /tmp/studio-vite.log 2>&1 &
+          npm run test:browser
       - run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/

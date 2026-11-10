@@ -312,6 +312,7 @@ export function tickSinging(): void {
   if (t > d.end + 0.4) return endDemo();
   let k = -1;
   while (k + 1 < d.times.length && d.times[k + 1][0] <= t) k++;
+  if (k >= 0 && t >= d.times[k][1]) k = -1;
   if (k !== useSing.getState().demoAt) useSing.setState({ demoAt: k });
 }
 
@@ -334,3 +335,43 @@ export function stopSinging(): void {
 }
 
 export { DEMO_SONGS };
+
+/** Editable monophonic arrangement. Start and duration are in quarter-note beats. */
+export interface EditorNote { id: string; midi: number; start: number; beats: number; word: string }
+
+/** Schedule independent phrases at their actual beat positions, preserving rests. */
+export async function playArrangement(notes: EditorNote[], bpm: number, body: BodyMix, ready: () => Promise<void>): Promise<void> {
+  stopSinging();
+  const token = demoToken;
+  await ready();
+  if (!engine.running || token !== demoToken) return;
+  try { await g2p.load(); } catch { /* the engine has a letter-to-sound fallback */ }
+  if (token !== demoToken) return;
+  const sorted = [...notes].sort((a,b) => a.start-b.start);
+  if (!sorted.length) return;
+  const beat = 60 / bpm, lead = 0.35;
+  const syllables = sorted.map(n => lyricsToSyllables(n.word.trim() || 'ah')[0] ?? AH);
+  // Consecutive notes share a phrase so consonants and legato are planned together;
+  // a gap starts a new phrase, leaving actual silence at its beat position.
+  const groups: { start:number; notes: {midi:number; beats:number; syl:Syllable}[]; end:number }[] = [];
+  sorted.forEach((n,i) => {
+    let group=groups[groups.length-1];
+    if (!group || Math.abs(n.start-group.end)>1e-6) {
+      group={start:n.start, notes:[], end:n.start}; groups.push(group);
+    }
+    group.notes.push({midi:n.midi,beats:n.beats,syl:syllables[i]});
+    group.end=n.start+n.beats;
+  });
+  const plans = groups.map(g => planSong(g.notes, {body, bpm, t0:lead+g.start*beat, vibrato:useSing.getState().vibrato}));
+  const gestures = plans.flatMap(p => p.gestures);
+  if (gestures.length > 4000) throw new Error('Song is too complex for the voice engine; shorten it and try again.');
+  const segments = plans.flatMap(p => p.segments);
+  const end = Math.max(...plans.map(p => p.end));
+  const times: [number,number][] = sorted.map(n=>[lead+n.start*beat,lead+(n.start+n.beats)*beat]);
+  const id = engine.schedule({gestures, segments, end});
+  const parent = sorted.map((_,i)=>i);
+  demoRun = {id, times, midi:sorted.map(n=>n.midi), text:syllables.map(s=>s.text), shown:syllables.map(written), parent, end, offset:null};
+  const state=useSing.getState();
+  ownWords ??= {lyrics:state.lyrics,cursor:state.cursor};
+  useSing.setState({lyrics: sorted.map(n=>n.word || 'ah').join(' '), syllables, cursor:0, demo:'Arrangement', demoAt:-1});
+}

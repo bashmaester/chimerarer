@@ -11,6 +11,8 @@ export function studioBody(scene) {
   const jointState = new Map();
   let previousTime = null;
   let blend = 1;
+  let shape = null;
+  let shapeEnabled = true;
   function smoothJoint(key, target) {
     let point = jointState.get(key);
     if (!point) { point = target.clone(); jointState.set(key, point); }
@@ -20,8 +22,12 @@ export function studioBody(scene) {
   const blue = '#4fb6f2', mid = '#3487c4', dim = '#1f5f8c';
   const vec = (x,y,z) => new THREE.Vector3(x,y,z);
   function path(points, color=blue, width=.85, alpha=.7, close=false) {
-    P.reset(); for (const p of points) P.p(p.x,p.y,p.z);
-    if (close && points.length) P.p(points[0].x,points[0].y,points[0].z);
+    const put = (p) => {
+      const f = shapeEnabled && shape ? 1+(shape.factor-1)*Math.max(0,Math.min(1,(shape.top-p.y)/8)) : 1;
+      P.p(shape ? shape.x+(p.x-shape.x)*f : p.x, p.y, shape ? shape.z+(p.z-shape.z)*f : p.z);
+    };
+    P.reset(); for (const p of points) put(p);
+    if (close && points.length) put(points[0]);
     beams.poly(P,color,width,{alpha});
   }
   function oval(center, rx, rz, color=mid, alpha=.6, rotation=null) {
@@ -40,15 +46,17 @@ export function studioBody(scene) {
   return {
     group: beams.group,
     resize(w,h){beams.setResolution(w,h)},
-    update(time,preset,energy,anchor,k, hair="None", clothing="None") {
+    update(time,preset,energy,anchor,k, hair="None", clothing="None", build=1, speed=1, variety=.4, seed=1) {
       beams.begin();
       const dt = previousTime === null ? 1 : Math.max(0, time - previousTime);
       blend = dt > .5 ? 1 : 1 - Math.exp(-dt * 7);
       previousTime = time;
       const amp = (preset === 'Still' ? 0 : preset === 'Electric pulse' ? 1.3 : .7) * energy;
-      const s = Math.sin(time*(preset === 'Electric pulse'?2.8:1.25))*amp;
-      const c = Math.cos(time*1.25)*amp;
+      const t=time*speed, phase=seed*1.618;
+      const s = (Math.sin(t*(preset === 'Electric pulse'?2.8:1.25)) + variety*.35*Math.sin(t*.53+phase))*amp;
+      const c = (Math.cos(t*1.25) + variety*.35*Math.sin(t*.79+phase))*amp;
       const neck=anchor.center.clone().multiplyScalar(1/k), top=neck.y;
+      shape={x:neck.x,z:neck.z,top,factor:build}; shapeEnabled=true;
       // Torso proportions measured relative to the bottom of the original head.
       // Motion keeps the neck anchored while the shoulders and hips counter-sway.
       const center=(y)=>vec(neck.x + .5*s*Math.max(0,Math.min(1,(top-y)/25)),y, neck.z + .9*s*Math.max(0,Math.min(1,(top-y)/25)));
@@ -72,6 +80,7 @@ export function studioBody(scene) {
       }
       // Hair strands are drawn around the head's own animated neck frame.  The
       // forehead is left open so the original expressive face stays visible.
+      shapeEnabled=false;
       if (hair !== 'None') {
         const hairColor = hair === 'Long' ? '#ffb96b' : hair === 'Bob' ? '#ff73cf' : '#5be381';
         const hairPoint = (x,y,z) => vec(x,y,z).applyQuaternion(anchor.rotation).add(neck);
@@ -100,6 +109,7 @@ export function studioBody(scene) {
           }
         }
       }
+      shapeEnabled=true;
       // Clothing is a separate colored wire surface, not a replacement for the
       // underlying anatomy. Its rings and seams follow the swaying torso.
       if (clothing !== 'None') {
@@ -136,11 +146,18 @@ export function studioBody(scene) {
         path([center(top-7).add(vec(5,0,0)),center(top-8).add(vec(4,-.7,side*6)),center(top-9).add(vec(1,-1,side*14)),center(top-10).add(vec(-1,-1,side*17))],blue,1.05,.8);
         path([center(top-16).add(vec(-6,0,side*3)),center(top-13).add(vec(-6,0,side*11)),center(top-10).add(vec(-1,-1,side*17)),center(top-20).add(vec(-4,0,side*9)),center(top-16).add(vec(-6,0,side*3))],mid,.85,.65);
         const shoulder=center(top-11).add(vec(0,0,side*17));
+        // Short tapered bridge overlaps the torso shell and the upper arm so
+        // the deltoid grows out of the shoulder instead of floating beside it.
+        const shoulderRoot=center(top-10).add(vec(0,0,side*13));
+        limb(shoulderRoot,shoulder,4.6,4.3);
         let elbow=center(top-29).add(vec(1.2*c,0,side*(20+1.2*s)));
         let wrist=center(top-45).add(vec(2*c,0,side*(21+2*s)));
         if (preset === 'Hands to heart') {
           elbow=center(top-25).add(vec(3+c,0,side*(22+s)));
           wrist=center(top-17).add(vec(10+c,0,side*(8+s)));
+        } else if (preset === 'Wave') {
+          elbow=center(top-20).add(vec(2+c,0,side*23));
+          wrist=center(top-8).add(vec(3+c*2,0,side*(25+3*s)));
         } else if (preset === 'Reach') {
           elbow=center(top-17).add(vec(2+c,0,side*(25+s)));
           wrist=center(top-7).add(vec(2+c*2,0,side*(37+s*2)));

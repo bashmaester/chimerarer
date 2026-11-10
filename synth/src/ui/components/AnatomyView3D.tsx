@@ -63,8 +63,12 @@ export function AnatomyView3D(props: { slots?: SlotsFn; info?: InfoFn; showForma
   const [energy, setEnergy] = useState(0.65);
   const [hair, setHair] = useState("Long");
   const [clothing, setClothing] = useState("Tank top");
-  const bodySettings = useRef({ bodyVisible, movement, energy, hair, clothing });
-  bodySettings.current = { bodyVisible, movement, energy, hair, clothing };
+  const [build, setBuild] = useState(1);
+  const [speed, setSpeed] = useState(1);
+  const [variety, setVariety] = useState(.4);
+  const [seed, setSeed] = useState(1);
+  const bodySettings = useRef({ bodyVisible, movement, energy, hair, clothing, build, speed, variety, seed });
+  bodySettings.current = { bodyVisible, movement, energy, hair, clothing, build, speed, variety, seed };
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -243,7 +247,7 @@ export function AnatomyView3D(props: { slots?: SlotsFn; info?: InfoFn; showForma
         const readouts = readoutsRef.current;
         if (readouts && (++fTick % 4 === 0 || formants.length === 0)) formants = m.transfer(a).formants;
         r.update(m, f, a, tele, view, dt);
-        if (settings.bodyVisible) body.update(now / 1000, settings.movement, settings.energy, r.neckAnchor(m), m.tract.scale, settings.hair, settings.clothing);
+        if (settings.bodyVisible) body.update(now / 1000, settings.movement, settings.energy, r.neckAnchor(m), m.tract.scale, settings.hair, settings.clothing, settings.build, settings.speed, settings.variety, settings.seed);
         gl.render(r.scene, camera);
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.globalCompositeOperation = "source-over";
@@ -324,7 +328,7 @@ export function AnatomyView3D(props: { slots?: SlotsFn; info?: InfoFn; showForma
     <div ref={wrapRef} className="anatomy three">
       {!props.feed && <div className="studio-motion-controls">
         <button type="button" onClick={() => setBodyVisible(!bodyVisible)}>{bodyVisible ? "HEAD VIEW" : "FULL BODY"}</button>
-        {bodyVisible && <><label>Motion <select value={movement} onChange={e => setMovement(e.target.value)}><option>Liquid sway</option><option>Hands to heart</option><option>Reach</option><option>Electric pulse</option><option>Still</option></select></label><label>Hair <select value={hair} onChange={e => setHair(e.target.value)}><option>None</option><option>Long</option><option>Bob</option><option>Curls</option></select></label><label>Clothes <select value={clothing} onChange={e => setClothing(e.target.value)}><option>None</option><option>Tank top</option><option>Dress</option></select></label><label>Energy <input aria-label="Motion energy" type="range" min="0" max="1" step="0.01" value={energy} onChange={e => setEnergy(Number(e.target.value))} /></label><small>PROCEDURAL MOTION</small></>}
+        {bodyVisible && <><label>Motion <select value={movement} onChange={e => setMovement(e.target.value)}><option>Liquid sway</option><option>Hands to heart</option><option>Wave</option><option>Reach</option><option>Electric pulse</option><option>Still</option></select></label><label>Hair <select value={hair} onChange={e => setHair(e.target.value)}><option>None</option><option>Long</option><option>Bob</option><option>Curls</option></select></label><label>Clothes <select value={clothing} onChange={e => setClothing(e.target.value)}><option>None</option><option>Tank top</option><option>Dress</option></select></label><label>Energy <input aria-label="Motion energy" type="range" min="0" max="1" step="0.01" value={energy} onChange={e => setEnergy(Number(e.target.value))} /></label><label>Build <input aria-label="Body build" type="range" min="0.75" max="1.3" step="0.05" value={build} onChange={e => setBuild(Number(e.target.value))} /></label><label>Speed <input aria-label="Motion speed" type="range" min="0.25" max="2" step="0.05" value={speed} onChange={e => setSpeed(Number(e.target.value))} /></label><label>Variation <input aria-label="Motion variation" type="range" min="0" max="1" step="0.05" value={variety} onChange={e => setVariety(Number(e.target.value))} /></label><button type="button" onClick={() => setSeed(v => v+1)}>NEW VARIATION</button><small>PROCEDURAL MOTION</small></>}
       </div>}
       <canvas ref={canvasRef} aria-label="Vocal tract in 3D. Drag to turn the head, scroll or pinch to zoom, double-click to go back to the starting view." role="img" />
     </div>
