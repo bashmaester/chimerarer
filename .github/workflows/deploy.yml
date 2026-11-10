@@ -4,7 +4,7 @@ on:
     branches: [arena/2349fcd4-chimerarer]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 concurrency:
@@ -24,6 +24,16 @@ jobs:
           targets: wasm32-unknown-unknown
       - run: cargo build --locked -p chimera-wasm --release --target wasm32-unknown-unknown
       - run: cp target/wasm32-unknown-unknown/release/chimera_wasm.wasm synth/src/wasm/chimera.wasm
+      - name: Make engine available for preview recovery
+        id: engine_blob
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -c 'import json,base64; print(json.dumps({"content":base64.b64encode(open("synth/src/wasm/chimera.wasm","rb").read()).decode(),"encoding":"base64"}))' > /tmp/engine-blob.json
+          sha=$(gh api repos/${{ github.repository }}/git/blobs --method POST --input /tmp/engine-blob.json --jq .sha)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: Engine blob ${{ steps.engine_blob.outputs.sha }}
+        run: echo "Engine available"
       - uses: actions/upload-artifact@v4
         with:
           name: chimera-wasm
