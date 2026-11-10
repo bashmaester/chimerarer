@@ -19,6 +19,15 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - run: cargo build --locked -p chimera-wasm --release --target wasm32-unknown-unknown
+      - run: cp target/wasm32-unknown-unknown/release/chimera_wasm.wasm synth/src/wasm/chimera.wasm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chimera-wasm
+          path: synth/src/wasm/chimera.wasm
       - run: npm ci
       - run: npm run build
         env:

@@ -1,20 +1,19 @@
 # Chimera Motion Studio
 
-A browser-based creative studio prototype for exploring a neon generative performer, motion presets and sound together. Built with Three.js and Vite.
+This studio includes the actual [CHIMERA Vocal Synth](https://github.com/jamesondh/chimera-vocal-synth) application (upstream commit `6259e880f5d0108b862e98cefd930aa8c5bc0dc5`), including its Rust/WASM physical voice engine, singing editor, demos, and live 3D anatomical head. Upstream code is MIT licensed; see `CHIMERA-LICENSE` and the bundled font and dictionary licenses in `public`.
+
+The app starts in Sing mode with the original 3D head. Click **Breathe in and start** to enable browser audio and hear the demo. In the 3D view, **Full body** adds a procedural line-art body, with motion and energy controls; **Head view** returns to the original framing. The body's movement is an early local prototype, not MotionBricks inference or synchronized choreography. The original 2D view and other synth modes remain available. The earlier motion prototype is available at `motion.html`.
 
 ## Run locally
 
+Requires Node 22+, Rust and the `wasm32-unknown-unknown` target:
+
 ```sh
+rustup target add wasm32-unknown-unknown
+cargo build --locked -p chimera-wasm --release --target wasm32-unknown-unknown
+cp target/wasm32-unknown-unknown/release/chimera_wasm.wasm synth/src/wasm/chimera.wasm
 npm ci
 npm run dev
 ```
 
-Drag the stage to orbit and scroll to zoom. Choose a movement, adjust energy and speed, and press play. Choose a browser-generated tone or upload your own audio. The timeline can be scrubbed; Record downloads a **silent** WebM of the stage, and Export downloads the current settings as JSON.
-
-## Integration status
-
-The procedural rig and browser oscillator are local prototypes, **not** integrations with [Chimera Vocal Synth](https://github.com/jamesondh/chimera-vocal-synth) or [MotionBricks Live](https://huggingface.co/spaces/monoradio/motionbricks-live). Connecting those projects' actual synthesis and motion inference interfaces, audio-inclusive recording, and persistent project editing are future work. Uploaded audio stays in the browser and is not included in the JSON export.
-
-## Deploy
-
-The GitHub Actions workflow builds and deploys the current working branch to GitHub Pages. Set the repository's Pages source to **GitHub Actions** in repository settings if it is not already configured. `BASE_PATH` is set to the repository path in CI for project Pages URLs.
+The GitHub Actions workflow builds the WASM and site and deploys to GitHub Pages. The uploaded `chimera-wasm` workflow artifact can also be used for local development when a Rust toolchain is unavailable. Audio requires HTTPS or localhost and a user gesture.

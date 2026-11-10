@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 // Vector-display anatomy, using Chimera's blue/amber/pink palette. These procedural
 // meshes follow the same joints as the motion rig; they are not the upstream head.
-export function createPerformer(rig, joints) {
+export function createPerformer(rig, joints, { showHead = true } = {}) {
   const blue = 0x4fb6f2, dim = 0x3487c4, pink = 0xff73cf, amber = 0xffb340, white = 0xeef6f8;
   function line(parent, points, color=blue, opacity=.8, closed=false) {
     if (closed) points = [...points, points[0]];
@@ -16,7 +16,7 @@ export function createPerformer(rig, joints) {
     for(let j=1;j<12;j++){let lat=-Math.PI/2+j*Math.PI/12, p=[];for(let i=0;i<=64;i++){let a=i*Math.PI*2/64;p.push([rx*Math.cos(lat)*Math.cos(a),ry*Math.sin(lat),rz*Math.cos(lat)*Math.sin(a)])}line(parent,p,color,j%3===0?.75:.4)}
     for(let j=0;j<12;j++){let a=j*Math.PI/12,p=[];for(let i=0;i<=64;i++){let t=i*Math.PI*2/64;p.push([rx*Math.cos(t)*Math.cos(a),ry*Math.sin(t),rz*Math.cos(t)*Math.sin(a)])}line(parent,p,color,j%3===0?.65:.3)}
   }
-  const head=new THREE.Group();rig.add(head);globe(head,.25,.32,.215);
+  const head=new THREE.Group();rig.add(head);head.visible = showHead;globe(head,.25,.32,.215);
   // Eye sockets, brows, nose, lips and the inner vocal tract make the head read as
   // a face as well as a transparent cutaway when it turns.
   for(const sign of [-1,1]){
