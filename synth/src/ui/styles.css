@@ -2871,3 +2871,5 @@ input[type="range"]::-moz-range-thumb {
 .studio-motion-controls label { display:flex; align-items:center; gap:4px; }
 .studio-motion-controls input { width: 60px; accent-color: #ff73cf; }
 .studio-motion-controls small { color:#ffb340; font-size:9px; }
+.studio-motion-controls { max-width: calc(100% - 24px); row-gap: 6px; }
+.studio-motion-controls label { white-space: nowrap; }

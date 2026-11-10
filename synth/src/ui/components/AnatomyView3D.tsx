@@ -61,8 +61,10 @@ export function AnatomyView3D(props: { slots?: SlotsFn; info?: InfoFn; showForma
   const [bodyVisible, setBodyVisible] = useState(false);
   const [movement, setMovement] = useState("Liquid sway");
   const [energy, setEnergy] = useState(0.65);
-  const bodySettings = useRef({ bodyVisible, movement, energy });
-  bodySettings.current = { bodyVisible, movement, energy };
+  const [hair, setHair] = useState("Long");
+  const [clothing, setClothing] = useState("Tank top");
+  const bodySettings = useRef({ bodyVisible, movement, energy, hair, clothing });
+  bodySettings.current = { bodyVisible, movement, energy, hair, clothing };
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -241,7 +243,7 @@ export function AnatomyView3D(props: { slots?: SlotsFn; info?: InfoFn; showForma
         const readouts = readoutsRef.current;
         if (readouts && (++fTick % 4 === 0 || formants.length === 0)) formants = m.transfer(a).formants;
         r.update(m, f, a, tele, view, dt);
-        if (settings.bodyVisible) body.update(now / 1000, settings.movement, settings.energy, r.neckAnchor(m), m.tract.scale);
+        if (settings.bodyVisible) body.update(now / 1000, settings.movement, settings.energy, r.neckAnchor(m), m.tract.scale, settings.hair, settings.clothing);
         gl.render(r.scene, camera);
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.globalCompositeOperation = "source-over";
@@ -263,14 +265,12 @@ export function AnatomyView3D(props: { slots?: SlotsFn; info?: InfoFn; showForma
           const near = fog.near, far = fog.far;
           fog.near = distance - 3 * m.tract.scale;
           fog.far = distance + 30 * m.tract.scale;
-          body.group.visible = false;
           gl.setScissorTest(true);
           gl.setScissor(0, 0, side, side);
           gl.setViewport(0, 0, side, side);
           gl.render(r.scene, detailCamera);
           gl.setScissorTest(false);
           gl.setViewport(0, 0, w, h);
-          body.group.visible = true;
           fog.near = near; fog.far = far;
           const x = w - side - 12, y = 12;
           ctx.fillStyle = "#000";
@@ -324,7 +324,7 @@ export function AnatomyView3D(props: { slots?: SlotsFn; info?: InfoFn; showForma
     <div ref={wrapRef} className="anatomy three">
       {!props.feed && <div className="studio-motion-controls">
         <button type="button" onClick={() => setBodyVisible(!bodyVisible)}>{bodyVisible ? "HEAD VIEW" : "FULL BODY"}</button>
-        {bodyVisible && <><label>Motion <select value={movement} onChange={e => setMovement(e.target.value)}><option>Liquid sway</option><option>Electric pulse</option><option>Still</option></select></label><label>Energy <input aria-label="Motion energy" type="range" min="0" max="1" step="0.01" value={energy} onChange={e => setEnergy(Number(e.target.value))} /></label><small>PROCEDURAL MOTION</small></>}
+        {bodyVisible && <><label>Motion <select value={movement} onChange={e => setMovement(e.target.value)}><option>Liquid sway</option><option>Hands to heart</option><option>Reach</option><option>Electric pulse</option><option>Still</option></select></label><label>Hair <select value={hair} onChange={e => setHair(e.target.value)}><option>None</option><option>Long</option><option>Bob</option><option>Curls</option></select></label><label>Clothes <select value={clothing} onChange={e => setClothing(e.target.value)}><option>None</option><option>Tank top</option><option>Dress</option></select></label><label>Energy <input aria-label="Motion energy" type="range" min="0" max="1" step="0.01" value={energy} onChange={e => setEnergy(Number(e.target.value))} /></label><small>PROCEDURAL MOTION</small></>}
       </div>}
       <canvas ref={canvasRef} aria-label="Vocal tract in 3D. Drag to turn the head, scroll or pinch to zoom, double-click to go back to the starting view." role="img" />
     </div>
