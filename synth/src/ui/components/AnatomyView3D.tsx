@@ -86,6 +86,7 @@ export function AnatomyView3D(props: { slots?: SlotsFn; info?: InfoFn; showForma
     r.facing = feedRef.current?.facing ?? 1;
     const glow = new Glow();
     const camera = r.camera;
+    const detailCamera = new THREE.PerspectiveCamera(24, 1, 5, 2000);
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
@@ -167,6 +168,7 @@ export function AnatomyView3D(props: { slots?: SlotsFn; info?: InfoFn; showForma
       gl.setPixelRatio(dpr);
       gl.setSize(Math.max(1, w), Math.max(1, h), false);
       r.resize(Math.max(1, w), Math.max(1, h));
+      body.resize(Math.max(1, w), Math.max(1, h));
     };
     const ro = new ResizeObserver(fit);
     ro.observe(wrap);
@@ -227,21 +229,19 @@ export function AnatomyView3D(props: { slots?: SlotsFn; info?: InfoFn; showForma
           bodyFramed = settings.bodyVisible;
           const p = r.poses(m);
           if (bodyFramed) {
-            const target = p.target.clone().add(new THREE.Vector3(0, -30 * m.tract.scale, 0));
+            const target = p.target.clone().add(new THREE.Vector3(0, -42 * m.tract.scale, 0));
             const direction = p.home.clone().sub(p.target).normalize();
-            const distance = Math.max(250, 54 / Math.tan(camera.fov * Math.PI / 360), 38 / (Math.tan(camera.fov * Math.PI / 360) * camera.aspect));
+            const distance = Math.max(250, 69 * m.tract.scale / Math.tan(camera.fov * Math.PI / 360), 38 * m.tract.scale / (Math.tan(camera.fov * Math.PI / 360) * camera.aspect));
             moveTo(target.clone().add(direction.multiplyScalar(distance)), target, 0.9);
           } else moveTo(p.home, p.target, 0.9);
         }
-        body.group.scale.setScalar(24 * m.tract.scale);
-        body.group.position.y = -64 * m.tract.scale;
-        if (settings.bodyVisible) body.update(now / 1000, settings.movement, settings.energy);
         stepTween(dt);
         controls.update(dt);
         const f = m.frame(a);
         const readouts = readoutsRef.current;
         if (readouts && (++fTick % 4 === 0 || formants.length === 0)) formants = m.transfer(a).formants;
         r.update(m, f, a, tele, view, dt);
+        if (settings.bodyVisible) body.update(now / 1000, settings.movement, settings.energy, r.neckAnchor(m), m.tract.scale);
         gl.render(r.scene, camera);
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.globalCompositeOperation = "source-over";
@@ -249,20 +249,51 @@ export function AnatomyView3D(props: { slots?: SlotsFn; info?: InfoFn; showForma
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(glCanvas, 0, 0, canvas.width, canvas.height);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        if (r.caliper) {
+        if (settings.bodyVisible && w >= 400 && h >= 260) {
+          // A live close-up keeps the original singing face legible while the full body is framed.
+          // It uses the same animated geometry and telemetry, not a second or prerecorded head.
+          const side = Math.min(190, Math.floor(w * 0.28), Math.floor(h * 0.36));
+          const poses = r.poses(m);
+          const direction = camera.position.clone().sub(controls.target).normalize();
+          const distance = 1.15 * 15.2 * m.tract.scale / Math.tan(detailCamera.fov * Math.PI / 360);
+          detailCamera.position.copy(poses.target).addScaledVector(direction, distance);
+          detailCamera.lookAt(poses.target);
+          detailCamera.updateProjectionMatrix();
+          const fog = r.scene.fog as THREE.Fog;
+          const near = fog.near, far = fog.far;
+          fog.near = distance - 3 * m.tract.scale;
+          fog.far = distance + 30 * m.tract.scale;
+          body.group.visible = false;
+          gl.setScissorTest(true);
+          gl.setScissor(0, 0, side, side);
+          gl.setViewport(0, 0, side, side);
+          gl.render(r.scene, detailCamera);
+          gl.setScissorTest(false);
+          gl.setViewport(0, 0, w, h);
+          body.group.visible = true;
+          fog.near = near; fog.far = far;
+          const x = w - side - 12, y = 12;
+          ctx.fillStyle = "#000";
+          ctx.fillRect(x, y, side, side);
+          ctx.drawImage(glCanvas, 0, canvas.height - side * dpr, side * dpr, side * dpr, x, y, side, side);
+          ctx.strokeStyle = "#3487c4";
+          ctx.strokeRect(x + 0.5, y + 0.5, side - 1, side - 1);
+          label(ctx, tele ? "LIVE FACE" : "FACE / READY", x + 8, y + 15, { size: 10, color: V.blue, ls: 0.12 });
+        }
+        if (r.caliper && !settings.bodyVisible) {
           const [cx, cy] = r.project(r.caliper.x, r.caliper.y, r.caliper.z);
           label(ctx, r.caliper.area <= 0.0005 ? "CLOSED" : `${r.caliper.area.toFixed(2)} CM²`, cx + 10, cy - 6, { size: 11, color: V.white, ls: 0.12 });
         }
-        if (readouts) {
+        if (readouts && !settings.bodyVisible) {
           const info = infoRef.current(m, f, tele).map((s) => s.toUpperCase());
           const slots = slotsRef.current(m, a, f, formants, tele);
           drawReadouts(ctx, { w, h, compact: r.compact, slotX: w - Math.min(340, w * 0.42), slotY: h - Math.min(236, h * 0.3) }, formantsRef.current ? formants : [], info, slots);
         }
-        overlayRef.current?.(ctx, r.faceView(m, f, a), m, f, a, { w, h, dt });
+        if (!settings.bodyVisible) overlayRef.current?.(ctx, r.faceView(m, f, a), m, f, a, { w, h, dt });
         // the hearts start beside the crown on the side the face looks to, and drift that way
         crown = r.crown(m);
         pet.update(elapsed, [crown.x + r.facing * 7 * crown.cmPx, crown.y + 0.5 * crown.cmPx], crown.cmPx);
-        pet.draw(ctx, r.facing, crown.cmPx);
+        if (!settings.bodyVisible) pet.draw(ctx, r.facing, crown.cmPx);
         glow.apply(canvas, ctx, dpr);
       }
       raf = requestAnimationFrame(loop);

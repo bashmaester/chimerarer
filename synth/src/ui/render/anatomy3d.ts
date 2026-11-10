@@ -720,6 +720,15 @@ export class Anatomy3D {
     return this.rest;
   }
 
+  /** Lowest cross-section of the animated neck, in world coordinates. */
+  neckAnchor(model: VoiceModel): { center: THREE.Vector3; width: number; depth: number; rotation: THREE.Quaternion } {
+    const r = this.restFor(model);
+    const section = r.head.at(r.head.y0 + 0.3 * model.tract.scale);
+    const center = new THREE.Vector3(section ? (section.F + section.Bk) / 2 : 0, r.head.y0 + 0.3 * model.tract.scale, 0);
+    this.beams.group.localToWorld(center);
+    return { center, width: section?.W ?? 5.3 * model.tract.scale, depth: section ? (section.F - section.Bk) / 2 : 5 * model.tract.scale, rotation: this.beams.group.quaternion.clone() };
+  }
+
   /** body point → CSS px on the canvas */
   project(x: number, y: number, z: number): [number, number] {
     const v = this.v3.set(x, y, z).applyMatrix4(this.beams.group.matrixWorld).project(this.camera);

@@ -38,7 +38,7 @@ export function nearestBody(b: BodyMix): BodyName {
 }
 
 export function sameBody(a: BodyMix | null | undefined, b: BodyMix | null | undefined): boolean {
-  return !!a && !!b && a.female === b.female && a.child === b.child;
+  return !!a && !!b && Math.abs(a.female - b.female) < 1e-5 && Math.abs(a.child - b.child) < 1e-5;
 }
 
 export const bodyKey = (b: BodyMix) => `${b.female},${b.child}`;
