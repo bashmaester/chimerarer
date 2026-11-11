@@ -114,6 +114,7 @@ let startPromise: Promise<void> | null = null;
 let pressSerial = 0;
 const pressOf = new Map<number, number>();
 let session = 0;
+let midiRequest = 0;
 
 /**
  * Per-tab voice settings, kept out of the other tabs. Play's Whisper is the one switch for
@@ -363,6 +364,7 @@ export const useStore = create<State>((set, get) => ({
   setView: (v) => set((s) => ({ view: { ...s.view, ...v } })),
   midi: { status: "off", inputs: [] },
   setMidi: (on) => {
+    const request = ++midiRequest;
     const noteOff = (n: number) => get().noteOff(n);
     if (!on) {
       disconnectMidi();
@@ -380,7 +382,7 @@ export const useStore = create<State>((set, get) => ({
       noteOff,
       inputs: (names) => set({ midi: { status: "on", inputs: names } }),
     }).catch(() => {
-      if (get().midi.status === "connecting") set({ midi: { status: "denied", inputs: [] } });
+      if (request === midiRequest && get().midi.status === "connecting") set({ midi: { status: "denied", inputs: [] } });
     });
   },
 }));

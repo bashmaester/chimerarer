@@ -6,7 +6,7 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "node tests/studio-body.mjs",
+    "test": "node tests/studio-body.mjs && node tests/midi.mjs",
     "test:browser": "node tests/browser.mjs"
   },
   "dependencies": {

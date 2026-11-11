@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "../store.ts";
-import { midiSupported } from "../midi.ts";
 import { nearestBody, type BodyMix } from "../body.ts";
 
 /** Computer-keyboard layout: two rows like a piano (A W S E D F T G Y H U J K O L P ;). */
@@ -88,7 +87,6 @@ export function Keys() {
   };
   return (
     <div className="keys-row">
-      <MidiButton />
       <div className="keys" data-layout="layered" aria-label="Keyboard. Computer keys A to semicolon play notes; Z and X change octave.">
         <div className="white-row">
           {whites.map((m) => (
@@ -109,26 +107,3 @@ export function Keys() {
   );
 }
 
-/** Connect a MIDI keyboard (any mode with keys); shows what is connected. */
-function MidiButton() {
-  const midi = useStore((s) => s.midi);
-  const setMidi = useStore((s) => s.setMidi);
-  if (!midiSupported()) return null;
-  const on = midi.status === "on";
-  const status =
-    midi.status === "connecting"
-      ? "Connecting…"
-      : midi.status === "denied"
-        ? "Blocked by the browser"
-        : on
-          ? midi.inputs.length
-            ? midi.inputs.join(", ")
-            : "Plug one in"
-          : "Off";
-  return (
-    <button className={`midi${on ? " on" : ""}`} aria-pressed={on} onClick={() => setMidi(!on)} title={on ? "Disconnect the MIDI keyboard" : "Play with a MIDI keyboard (the browser asks for access)"}>
-      <span className="midi-name">MIDI keyboard</span>
-      <span className="midi-status">{status}</span>
-    </button>
-  );
-}

@@ -19,3 +19,7 @@ npm run dev
 ```
 
 The GitHub Actions workflow builds the WASM and site and deploys to GitHub Pages. The uploaded `chimera-wasm` workflow artifact can also be used for local development when a Rust toolchain is unavailable. Audio requires HTTPS or localhost and a user gesture.
+
+## Live MIDI input
+
+Use **MIDI IN** in the top toolbar to grant Web MIDI permission and connect all available inputs. The connection stays active when changing modes, and newly connected devices are picked up automatically. Play and Speak use the keyboard pitch and gate; Sing advances through the lyrics; Beatbox plays a pitched hum; Bestiary controls pitch or triggers the selected call. Note velocity affects singing. Disconnecting a device or the MIDI input releases its held notes. Web MIDI requires HTTPS and browser support; audio must be started by a user gesture. This is live keyboard input, separate from MIDI file import in the song editor.

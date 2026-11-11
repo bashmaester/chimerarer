@@ -8,6 +8,7 @@ import { SpectrumView } from "./components/SpectrumView.tsx";
 import { VowelMap } from "./components/VowelMap.tsx";
 import { VoiceControls, VoiceToggles } from "./components/VoiceControls.tsx";
 import { Keys } from "./components/Keys.tsx";
+import { MidiButton } from "./components/MidiButton.tsx";
 import { Segmented, Toggle } from "./components/Controls.tsx";
 import { Screen } from "./components/Screen.tsx";
 import { SpeakRight, speechInfo, speechSlots, speechWords } from "./components/SpeakPanel.tsx";
@@ -82,6 +83,7 @@ function TopBar() {
         </div>
       )}
       <div className="topbar-right">
+        <MidiButton />
         <label className="volume">
           <span>Volume</span>
           <input type="range" min={0} max={1} step={0.01} value={volume} onChange={(e) => setVolume(Number(e.target.value))} style={{ "--pos": `${volume * 100}%` } as React.CSSProperties} />

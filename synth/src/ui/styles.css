@@ -2891,3 +2891,8 @@ input[type="range"]::-moz-range-thumb {
 .song-inspector {display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px; font-size:11px; color:#7db1c5; }.song-inspector b {color:#5be381; letter-spacing:1px}.song-inspector input {width:64px}.song-inspector .word-input {width:110px}.song-inspector small {color:#7093a0}
 .studio-motion-controls { max-height:40%; overflow:auto; }
 @media(max-width:600px) { .song-modal {padding:4px}.song-editor {height:98vh}.song-inspector {gap:6px}.song-editor header span {display:none} }
+/* MIDI input belongs to the whole instrument, not just the on-screen keys. */
+.topbar-right .global-midi { flex: 0 1 auto; min-width: 110px; max-width: 180px; min-height: 34px; padding: 4px 7px; }
+.topbar-right .global-midi .midi-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-right .global-midi:disabled { cursor: not-allowed; opacity: .6; }
+@media (max-width: 600px) { .topbar-right { flex-wrap: wrap; gap: 8px; } .topbar-right .global-midi { min-width: 100px; } }

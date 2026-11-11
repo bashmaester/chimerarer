@@ -1,0 +1,16 @@
+import { createServer } from 'vite';
+const server=await createServer({server:{middlewareMode:true}});
+const {connectMidi,disconnectMidi}=await server.ssrLoadModule('/synth/src/ui/midi.ts');
+const input=(id)=>({id,name:id,state:'connected',onmidimessage:null});
+const a=input('a'),b=input('b');const access={inputs:new Map([[a.id,a],[b.id,b]]),onstatechange:null};
+Object.defineProperty(globalThis,'navigator',{configurable:true,value:{requestMIDIAccess:async()=>access}});
+const events=[];await connectMidi({noteOn:(n,v)=>events.push(`on ${n} ${v}`),noteOff:n=>events.push(`off ${n}`),inputs:n=>events.push(`inputs ${n.join(',')}`)});
+const send=(p,...data)=>p.onmidimessage({data:new Uint8Array(data)});
+send(a,0x90,60,90);send(b,0x90,60,100);send(a,0x80,60,0);
+if(events.filter(x=>x.startsWith('off')).length)throw Error('Released while another device still holds note');
+send(b,0x90,60,0);send(a,0x91,62,80);send(a,0xb1,123,0);
+send(b,0x90,64,70);b.state='disconnected';access.onstatechange();
+send(a,0x90,65,70);disconnectMidi();
+for(const event of ['on 60 90','off 60','on 62 80','off 62','on 64 70','off 64','on 65 70','off 65'])if(!events.includes(event))throw Error(`Missing ${event}: ${events}`);
+if(a.onmidimessage!==null || b.onmidimessage!==null || access.onstatechange!==null)throw Error('MIDI listeners left attached');
+console.log('MIDI ownership, note-off, all-notes-off, hotplug and disconnect passed');await server.close();
